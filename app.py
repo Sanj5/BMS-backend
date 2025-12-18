@@ -40,8 +40,10 @@ app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 minutes
 
 app.config.update(
     SESSION_COOKIE_SAMESITE="None",
-    SESSION_COOKIE_SECURE=True
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True
 )
+
 
 CORS(
     app,
@@ -563,7 +565,7 @@ def api_login():
         email=data.get('email'),
         password=data.get('password')
     )
-    
+    session.clear()
     session['user_id'] = user.id
     session['username'] = user.username
     
