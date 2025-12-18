@@ -42,12 +42,16 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="None",
     SESSION_COOKIE_SECURE=True
 )
-
 CORS(
     app,
     supports_credentials=True,
-    origins=["https://*.vercel.app"]
+    resources={r"/*": {
+        "origins": [
+            "https://bms-frontend-three.vercel.app"
+        ]
+    }}
 )
+
 
 
 
@@ -224,6 +228,13 @@ class ShowService:
         
         cache.set(cache_key, shows_data, timeout=CACHE_TIMEOUT_SHOWS)
         return shows_data
+    
+    @app.after_request
+    def after_request(response):
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+        return response
     
     @staticmethod
     def get_show_details(show_id):
