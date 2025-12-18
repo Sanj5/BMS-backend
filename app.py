@@ -25,6 +25,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # ==================== CONFIGURATION ====================
 
 app = Flask(__name__)
+app.config.update(
+    SESSION_TYPE="filesystem",   # production-safe
+    SESSION_PERMANENT=False,
+    SESSION_USE_SIGNER=True,
+    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SECURE=True
+)
+
+Session(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'super-secret-key-change-in-production')
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///bookmyshow.db')
 if db_url.startswith("postgres"):
@@ -39,20 +48,7 @@ app.config['CACHE_TYPE'] = 'SimpleCache'
 app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 minutes
 
 
-app.config.update(
-    SESSION_COOKIE_SAMESITE="None",
-    SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_HTTPONLY=True
-)
-app.config.update(
-    SESSION_TYPE="filesystem",   # production-safe
-    SESSION_PERMANENT=False,
-    SESSION_USE_SIGNER=True,
-    SESSION_COOKIE_SAMESITE="None",
-    SESSION_COOKIE_SECURE=True
-)
 
-Session(app)
 
 
 CORS(
