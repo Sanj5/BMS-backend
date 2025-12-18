@@ -22,11 +22,20 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
-# ==================== CONFIGURATION ====================
+from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_session import Session
 
 app = Flask(__name__)
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+app.config['SECRET_KEY'] = os.environ.get(
+    'SECRET_KEY',
+    'super-secret-key-change-in-production'
+)
+
 app.config.update(
-    SESSION_TYPE="filesystem",   # production-safe
+    SESSION_TYPE="filesystem",
     SESSION_PERMANENT=False,
     SESSION_USE_SIGNER=True,
     SESSION_COOKIE_SAMESITE="None",
@@ -34,7 +43,8 @@ app.config.update(
 )
 
 Session(app)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'super-secret-key-change-in-production')
+
+
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///bookmyshow.db')
 if db_url.startswith("postgres"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
