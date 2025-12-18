@@ -822,10 +822,6 @@ def init_data():
 
 
 # ==================== APPLICATION INITIALIZATION ====================
-
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        init_data()
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+with app.app_context():
+    db.create_all()
+    init_data()
