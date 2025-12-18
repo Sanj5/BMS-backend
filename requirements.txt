@@ -5,3 +5,4 @@ flask-caching
 redis
 werkzeug
 gunicorn
+flask-session

@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 import uuid
 import os
 from flask_cors import CORS
+from flask_session import Session
 
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -43,6 +44,15 @@ app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True
 )
+app.config.update(
+    SESSION_TYPE="filesystem",   # production-safe
+    SESSION_PERMANENT=False,
+    SESSION_USE_SIGNER=True,
+    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SECURE=True
+)
+
+Session(app)
 
 
 CORS(
@@ -64,14 +74,7 @@ CACHE_TIMEOUT_SEATS = 60   # 1 minute
 CACHE_TIMEOUT_BOOKINGS = 180  # 3 minutes
 
 db = SQLAlchemy(app)
-CORS(
-    app,
-    supports_credentials=True,
-    origins=[
-        "https://*.vercel.app",
-        "http://localhost:3000"
-    ]
-)
+
 
 cache = Cache(app)
 
@@ -566,8 +569,10 @@ def api_login():
         password=data.get('password')
     )
     session.clear()
+    session.modified = True
     session['user_id'] = user.id
     session['username'] = user.username
+
     
     return jsonify({
         'message': 'Login successful',
