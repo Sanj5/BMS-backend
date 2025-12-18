@@ -15,6 +15,8 @@ from flask_caching import Cache
 from datetime import datetime, timedelta
 import uuid
 import os
+from flask_cors import CORS
+
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -23,12 +25,31 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'super-secret-key-change-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///bookmyshow.db')
+db_url = os.environ.get('DATABASE_URL', 'sqlite:///bookmyshow.db')
+if db_url.startswith("postgres"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Cache configuration
 app.config['CACHE_TYPE'] = 'SimpleCache'
 app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 minutes
+
+
+app.config.update(
+    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SECURE=True
+)
+
+CORS(
+    app,
+    supports_credentials=True,
+    origins=["https://*.vercel.app"]
+)
+
+
 
 # Cache timeout constants
 CACHE_TIMEOUT_SHOWS = 300  # 5 minutes
@@ -36,7 +57,15 @@ CACHE_TIMEOUT_SEATS = 60   # 1 minute
 CACHE_TIMEOUT_BOOKINGS = 180  # 3 minutes
 
 db = SQLAlchemy(app)
-CORS(app, supports_credentials=True)
+CORS(
+    app,
+    supports_credentials=True,
+    origins=[
+        "https://*.vercel.app",
+        "http://localhost:3000"
+    ]
+)
+
 cache = Cache(app)
 
 
@@ -171,13 +200,14 @@ class ShowService:
             return cached_data
         
         shows_query = (
-        db.session.query(Show, Theater)
-        .join(Theater, Show.theater_id == Theater.id)
-        .filter(Theater.city == city)
-            .filter(Show.start_time > datetime.now())
-            .order_by(Show.start_time)
-        .all()
-    )
+    db.session.query(Show, Theater)
+    .join(Theater, Show.theater_id == Theater.id)
+    .filter(Theater.city == city)
+    .filter(Show.start_time > datetime.now())
+    .order_by(Show.start_time)
+    .all()
+)
+
 
         shows_data = [
             {
@@ -481,10 +511,7 @@ def login_required(f):
 
 # ==================== ROUTES (Controller Layer) ====================
 
-@app.route('/')
-def index():
-    """Home page - single HTML file"""
-    return render_template('index.html')
+
 
 
 @app.route('/api/auth/register', methods=['POST'])
